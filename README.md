@@ -19,6 +19,8 @@ python -m pip install -e .
 
 ## Quick Start
 
+### CLI usage
+
 ```bash
 bioinformatics-tools gc-content ATGC
 bioinformatics-tools reverse-complement ATGC
@@ -30,6 +32,14 @@ bioinformatics-tools genome-visualize ATGCGATCGATCGATCG --output genome_plot.png
 bioinformatics-tools chromosome-map ATGCGATCGATCGATCG --window-size 4 --width 30
 bioinformatics-tools fasta-summary examples/example.fasta
 ```
+
+### Web app
+
+```bash
+streamlit run app.py
+```
+
+Then open the local URL shown by Streamlit to analyze sequences using a browser interface with plots and summary tables.
 
 You can also invoke the module directly:
 
