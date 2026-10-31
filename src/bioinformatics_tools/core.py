@@ -2,6 +2,13 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
 CODON_TABLE = {
     "TTT": "F", "TTC": "F", "TTA": "L", "TTG": "L",
     "TCT": "S", "TCC": "S", "TCA": "S", "TCG": "S",
@@ -113,6 +120,42 @@ def find_motifs(sequence: str, motif: str) -> list[int]:
         positions.append(index)
         start = index + 1
     return positions
+
+
+def visualize_genome(sequence: str, output_path: str = "genome_visualization.png", window_size: int = 10) -> str:
+    seq = _normalize_sequence(sequence, allow_rna=True)
+    if window_size <= 0:
+        raise ValueError("window_size must be greater than zero.")
+
+    scores: list[float] = []
+    labels: list[str] = []
+    for i in range(0, len(seq), window_size):
+        segment = seq[i:i + window_size]
+        if not segment:
+            continue
+        gc_percent = (sum(1 for base in segment if base in {"G", "C"}) / len(segment)) * 100
+        scores.append(gc_percent)
+        labels.append(f"{i + 1}-{i + len(segment)}")
+
+    if not scores:
+        raise ValueError("Sequence has no data to visualize.")
+
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+
+    fig, ax = plt.subplots(figsize=(12, 4))
+    colors = ["#4CAF50" if value >= 50 else "#2196F3" for value in scores]
+    ax.bar(labels, scores, color=colors, alpha=0.8)
+    ax.axhline(50, color="black", linestyle="--", linewidth=1)
+    ax.set_ylim(0, 100)
+    ax.set_ylabel("GC %")
+    ax.set_xlabel("Genome window")
+    ax.set_title("Genome GC content visualization")
+    ax.grid(axis="y", linestyle="--", alpha=0.3)
+    plt.tight_layout()
+    fig.savefig(output, dpi=200)
+    plt.close(fig)
+    return str(output)
 
 
 def read_fasta(path: str) -> dict[str, str]:

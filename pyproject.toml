@@ -9,6 +9,7 @@ description = "Simple bioinformatics utilities for DNA/RNA analysis"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Your Name" }]
+dependencies = ["matplotlib>=3.8.0"]
 
 [project.scripts]
 bioinformatics-tools = "bioinformatics_tools.cli:main"

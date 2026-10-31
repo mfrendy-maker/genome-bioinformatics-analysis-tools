@@ -13,6 +13,7 @@ from .core import (
     reverse_complement,
     sequence_length,
     translate_dna,
+    visualize_genome,
 )
 
 
@@ -46,6 +47,11 @@ def build_parser() -> argparse.ArgumentParser:
     fasta_parser = subparsers.add_parser("fasta-summary", help="Summarize the sequences in a FASTA file.")
     fasta_parser.add_argument("file_path", help="Path to a FASTA file")
 
+    viz_parser = subparsers.add_parser("genome-visualize", help="Generate a GC-content visualization for a sequence.")
+    viz_parser.add_argument("sequence", help="DNA or RNA sequence")
+    viz_parser.add_argument("--output", default="genome_visualization.png", help="Path to save the visualization image")
+    viz_parser.add_argument("--window-size", type=int, default=10, help="Window size for GC content calculation")
+
     return parser
 
 
@@ -77,6 +83,9 @@ def main() -> None:
         records = read_fasta(args.file_path)
         for name, sequence in records.items():
             print(f">{name} len={len(sequence)} gc={gc_content(sequence):.2f}%")
+    elif args.command == "genome-visualize":
+        output_path = visualize_genome(args.sequence, output_path=args.output, window_size=args.window_size)
+        print(output_path)
     else:
         parser.error(f"Unsupported command: {args.command}")
 

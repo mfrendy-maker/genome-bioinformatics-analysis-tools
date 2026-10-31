@@ -9,6 +9,7 @@ from .core import (
     reverse_complement,
     sequence_length,
     translate_dna,
+    visualize_genome,
 )
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "reverse_complement",
     "sequence_length",
     "translate_dna",
+    "visualize_genome",
 ]

@@ -1,9 +1,12 @@
+from pathlib import Path
+
 from bioinformatics_tools.core import (
     base_counts,
     find_motifs,
     gc_content,
     reverse_complement,
     translate_dna,
+    visualize_genome,
 )
 
 
@@ -30,3 +33,10 @@ def test_base_counts():
 def test_find_motifs():
     assert find_motifs("ATGATGATG", "ATG") == [0, 3, 6]
     assert find_motifs("AAAA", "TT") == []
+
+
+def test_visualize_genome(tmp_path):
+    output_path = tmp_path / "genome_visualization.png"
+    result = visualize_genome("ATGCGATCGATCGATCG", output_path=str(output_path), window_size=4)
+    assert result == str(output_path)
+    assert Path(result).exists()
