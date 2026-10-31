@@ -2,6 +2,10 @@
 
 A lightweight Python toolkit for common DNA/RNA analysis tasks. This project is designed for quick sequence inspection, educational use, and simple bioinformatics workflows.
 
+## Project Scope
+
+This tool is optimized for gene-length and moderate-size FASTA inputs, including common sequences around 3000 bp. For inputs in this range, analysis is fast and responsive in both CLI and browser-based workflows. Very large genome-scale files may still work, but performance depends on sequence size, the number of records, and the browser environment.
+
 ## Features
 
 - GC content calculation
