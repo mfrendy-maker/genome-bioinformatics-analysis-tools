@@ -11,6 +11,7 @@ from bioinformatics_tools.core import (
     find_motifs,
     gc_content,
     nucleotide_frequencies,
+    parse_vcf,
     reverse_complement,
     sequence_length,
     translate_dna,
@@ -21,7 +22,7 @@ from bioinformatics_tools.core import (
 st.set_page_config(page_title="Genome Browser", layout="wide")
 
 st.title("Genome Browser & Analysis Dashboard")
-st.caption("Upload a FASTA or paste a sequence to inspect GC content, motifs, and genome structure")
+st.caption("Upload a FASTA or VCF to inspect GC content, motifs, and variant calls")
 
 uploaded = st.sidebar.file_uploader("Upload FASTA file", type=["fa", "fasta", "txt"])
 uploaded_sequence = ""
@@ -33,6 +34,13 @@ if uploaded is not None:
         selected_name = st.sidebar.selectbox("Select sequence", names)
         uploaded_sequence = records[selected_name]
         st.sidebar.success(f"Loaded {selected_name}")
+
+vcf_upload = st.sidebar.file_uploader("Upload VCF file", type=["vcf", "txt"])
+vcf_variants = []
+if vcf_upload is not None:
+    vcf_text = vcf_upload.read().decode("utf-8", errors="ignore")
+    vcf_variants = parse_vcf(vcf_text)
+    st.sidebar.success(f"Loaded {len(vcf_variants)} variant(s)")
 
 sequence = st.text_area(
     "DNA / RNA sequence",
@@ -60,7 +68,7 @@ with col4:
 motif = st.text_input("Motif search", value="ATG")
 positions = find_motifs(sequence, motif)
 
-overview, track, map_view, motifs = st.tabs(["Overview", "GC Track", "Chromosome Map", "Motif Hits"])
+overview, track, map_view, motifs, variants = st.tabs(["Overview", "GC Track", "Chromosome Map", "Motif Hits", "Variants"])
 
 with overview:
     st.subheader("Sequence summary")
@@ -117,6 +125,22 @@ with motifs:
 
     motif_rows = [{"position": pos, "motif": sequence[pos:pos + len(motif)]} for pos in positions]
     st.dataframe(pd.DataFrame(motif_rows), use_container_width=True)
+
+with variants:
+    st.subheader("VCF variant overview")
+    if not vcf_variants:
+        st.info("Upload a VCF file to see variant details here.")
+    else:
+        variant_df = pd.DataFrame(vcf_variants)
+        st.dataframe(variant_df, use_container_width=True)
+        st.json({
+            "total_variants": len(variant_df),
+            "chromosomes": variant_df["CHROM"].value_counts().to_dict() if "CHROM" in variant_df.columns else {},
+            "variant_types": {
+                "SNVs": int((variant_df["REF"].str.len() == 1) & (variant_df["ALT"].str.len() == 1)).sum(),
+                "indels": int((variant_df["REF"].str.len() != variant_df["ALT"].str.len())).sum(),
+            },
+        })
 
 
 def read_fasta_from_text(raw_text: str) -> dict[str, str]:

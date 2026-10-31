@@ -5,6 +5,7 @@ from bioinformatics_tools.core import (
     chromosome_map,
     find_motifs,
     gc_content,
+    parse_vcf,
     reverse_complement,
     translate_dna,
     visualize_genome,
@@ -48,3 +49,16 @@ def test_chromosome_map():
     assert isinstance(map_text, str)
     assert len(map_text) > 10
     assert "#" in map_text or "█" in map_text or "=" in map_text
+
+
+def test_parse_vcf():
+    vcf_text = """##fileformat=VCFv4.2
+#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO
+chr1\t10\t.\tA\tT\t.\tPASS\tDP=10
+chr1\t20\t.\tG\tC\t.\tPASS\tDP=15
+"""
+    variants = parse_vcf(vcf_text)
+    assert len(variants) == 2
+    assert variants[0]["CHROM"] == "chr1"
+    assert variants[0]["POS"] == 10
+    assert variants[1]["ALT"] == "C"

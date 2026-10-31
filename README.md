@@ -39,7 +39,7 @@ bioinformatics-tools fasta-summary examples/example.fasta
 streamlit run app.py
 ```
 
-Then open the local URL shown by Streamlit to analyze sequences using a browser interface with plots and summary tables.
+Then open the local URL shown by Streamlit to analyze sequences using a browser interface with plots, motif search, and VCF variant inspection.
 
 You can also invoke the module directly:
 

@@ -182,6 +182,32 @@ def chromosome_map(sequence: str, window_size: int = 10, width: int = 60) -> str
     return header + "\n".join(blocks)
 
 
+def parse_vcf(vcf_text: str) -> list[dict[str, object]]:
+    if vcf_text is None:
+        return []
+
+    records: list[dict[str, object]] = []
+    for raw_line in str(vcf_text).splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split("\t")
+        if len(parts) < 8:
+            continue
+        chrom, pos, vid, ref, alt, qual, filt, info = parts[:8]
+        records.append({
+            "CHROM": chrom,
+            "POS": int(pos),
+            "ID": vid,
+            "REF": ref,
+            "ALT": alt,
+            "QUAL": qual,
+            "FILTER": filt,
+            "INFO": info,
+        })
+    return records
+
+
 def read_fasta(path: str) -> dict[str, str]:
     records: dict[str, str] = {}
     current_name: str | None = None
