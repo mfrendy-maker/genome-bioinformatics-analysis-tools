@@ -4,11 +4,20 @@ from __future__ import annotations
 
 import argparse
 
-from .core import gc_content, read_fasta, reverse_complement, translate_dna
+from .core import (
+    base_counts,
+    find_motifs,
+    gc_content,
+    nucleotide_frequencies,
+    read_fasta,
+    reverse_complement,
+    sequence_length,
+    translate_dna,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Simple bioinformatics tools.")
+    parser = argparse.ArgumentParser(description="Simple bioinformatics tools for DNA/RNA analysis.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     gc_parser = subparsers.add_parser("gc-content", help="Calculate GC percentage for a DNA sequence.")
@@ -20,6 +29,19 @@ def build_parser() -> argparse.ArgumentParser:
 
     translate_parser = subparsers.add_parser("translate", help="Translate a DNA sequence into amino acids.")
     translate_parser.add_argument("sequence", help="DNA sequence")
+
+    length_parser = subparsers.add_parser("length", help="Return the length of a sequence.")
+    length_parser.add_argument("sequence", help="DNA or RNA sequence")
+
+    counts_parser = subparsers.add_parser("base-counts", help="Count nucleotides in a sequence.")
+    counts_parser.add_argument("sequence", help="DNA or RNA sequence")
+
+    motif_parser = subparsers.add_parser("motif-search", help="Find all motif positions inside a sequence.")
+    motif_parser.add_argument("sequence", help="DNA or RNA sequence")
+    motif_parser.add_argument("motif", help="Motif to search for")
+
+    stats_parser = subparsers.add_parser("stats", help="Display GC and nucleotide frequency summary.")
+    stats_parser.add_argument("sequence", help="DNA or RNA sequence")
 
     fasta_parser = subparsers.add_parser("fasta-summary", help="Summarize the sequences in a FASTA file.")
     fasta_parser.add_argument("file_path", help="Path to a FASTA file")
@@ -37,6 +59,20 @@ def main() -> None:
         print(reverse_complement(args.sequence, rna=args.rna))
     elif args.command == "translate":
         print(translate_dna(args.sequence))
+    elif args.command == "length":
+        print(sequence_length(args.sequence))
+    elif args.command == "base-counts":
+        print(base_counts(args.sequence))
+    elif args.command == "motif-search":
+        print(find_motifs(args.sequence, args.motif))
+    elif args.command == "stats":
+        seq = args.sequence
+        print({
+            "length": sequence_length(seq),
+            "gc_content": round(gc_content(seq), 2),
+            "base_counts": base_counts(seq),
+            "nucleotide_frequencies": nucleotide_frequencies(seq),
+        })
     elif args.command == "fasta-summary":
         records = read_fasta(args.file_path)
         for name, sequence in records.items():

@@ -31,20 +31,41 @@ def _normalize_sequence(sequence: str, *, allow_rna: bool = False) -> str:
         raise ValueError("Sequence must contain at least one nucleotide.")
 
     valid_bases = {"A", "C", "G", "T", "U"}
-    if not allow_rna and set(normalized) - {"A", "C", "G", "T", "U"}:
-        invalid = sorted({base for base in normalized if base not in valid_bases})
-        raise ValueError(f"Sequence contains invalid nucleotides: {', '.join(invalid)}")
-
     invalid = sorted({base for base in normalized if base not in valid_bases})
     if invalid:
         raise ValueError(f"Sequence contains invalid nucleotides: {', '.join(invalid)}")
+
+    if not allow_rna and "U" in normalized:
+        raise ValueError("RNA sequences are not allowed in this context. Use rna=True or provide DNA data.")
     return normalized
 
 
 def gc_content(sequence: str) -> float:
-    seq = _normalize_sequence(sequence)
+    seq = _normalize_sequence(sequence, allow_rna=True)
     gc_count = sum(1 for base in seq if base in {"G", "C"})
     return float((gc_count / len(seq)) * 100)
+
+
+def base_counts(sequence: str) -> dict[str, int]:
+    seq = _normalize_sequence(sequence, allow_rna=True)
+    counts = {"A": 0, "C": 0, "G": 0, "T": 0, "U": 0}
+    for base in seq:
+        if base in counts:
+            counts[base] += 1
+    return counts
+
+
+def sequence_length(sequence: str) -> int:
+    return len(_normalize_sequence(sequence, allow_rna=True))
+
+
+def nucleotide_frequencies(sequence: str) -> dict[str, float]:
+    seq = _normalize_sequence(sequence, allow_rna=True)
+    counts = base_counts(seq)
+    total = sum(counts.values())
+    if total == 0:
+        return {base: 0.0 for base in counts}
+    return {base: round((count / total) * 100, 2) for base, count in counts.items()}
 
 
 def reverse_complement(sequence: str, rna: bool = False) -> str:
@@ -64,7 +85,7 @@ def reverse_complement(sequence: str, rna: bool = False) -> str:
 
 
 def translate_dna(sequence: str) -> str:
-    dna = _normalize_sequence(sequence).replace("U", "T")
+    dna = _normalize_sequence(sequence, allow_rna=True).replace("U", "T")
     protein: list[str] = []
 
     for i in range(0, len(dna) - 2, 3):
@@ -75,6 +96,23 @@ def translate_dna(sequence: str) -> str:
         protein.append(amino_acid)
 
     return "".join(protein)
+
+
+def find_motifs(sequence: str, motif: str) -> list[int]:
+    seq = _normalize_sequence(sequence, allow_rna=True)
+    motif_seq = _normalize_sequence(motif, allow_rna=True)
+    if not motif_seq:
+        return []
+
+    positions: list[int] = []
+    start = 0
+    while True:
+        index = seq.find(motif_seq, start)
+        if index == -1:
+            break
+        positions.append(index)
+        start = index + 1
+    return positions
 
 
 def read_fasta(path: str) -> dict[str, str]:
