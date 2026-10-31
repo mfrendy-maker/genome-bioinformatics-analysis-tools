@@ -1,6 +1,6 @@
 # Genome Bioinformatics Analysis Tools
 
-A lightweight Python toolkit for common DNA/RNA analysis tasks. This project is designed for quick sequence inspection, educational use, and simple bioinformatics workflows.
+A lightweight Python toolkit for common DNA/RNA analysis tasks, optimized for gene-length and moderate-size FASTA inputs such as sequences around 3000 bp. This project is designed for quick sequence inspection, educational use, and simple bioinformatics workflows.
 
 ## Project Scope
 
