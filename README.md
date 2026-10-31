@@ -27,6 +27,7 @@ bioinformatics-tools length ATGGCCCTT
 bioinformatics-tools base-counts ATGGCCCTT
 bioinformatics-tools motif-search ATGATGATG ATG
 bioinformatics-tools genome-visualize ATGCGATCGATCGATCG --output genome_plot.png --window-size 4
+bioinformatics-tools chromosome-map ATGCGATCGATCGATCG --window-size 4 --width 30
 bioinformatics-tools fasta-summary examples/example.fasta
 ```
 

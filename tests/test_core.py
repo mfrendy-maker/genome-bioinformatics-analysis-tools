@@ -2,6 +2,7 @@ from pathlib import Path
 
 from bioinformatics_tools.core import (
     base_counts,
+    chromosome_map,
     find_motifs,
     gc_content,
     reverse_complement,
@@ -40,3 +41,10 @@ def test_visualize_genome(tmp_path):
     result = visualize_genome("ATGCGATCGATCGATCG", output_path=str(output_path), window_size=4)
     assert result == str(output_path)
     assert Path(result).exists()
+
+
+def test_chromosome_map():
+    map_text = chromosome_map("ATGCGATCGATCGATCG", window_size=4)
+    assert isinstance(map_text, str)
+    assert len(map_text) > 10
+    assert "#" in map_text or "█" in map_text or "=" in map_text

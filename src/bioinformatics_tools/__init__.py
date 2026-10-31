@@ -2,6 +2,7 @@
 
 from .core import (
     base_counts,
+    chromosome_map,
     find_motifs,
     gc_content,
     nucleotide_frequencies,
@@ -14,6 +15,7 @@ from .core import (
 
 __all__ = [
     "base_counts",
+    "chromosome_map",
     "find_motifs",
     "gc_content",
     "nucleotide_frequencies",

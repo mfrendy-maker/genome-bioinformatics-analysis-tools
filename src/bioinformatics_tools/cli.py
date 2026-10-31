@@ -6,6 +6,7 @@ import argparse
 
 from .core import (
     base_counts,
+    chromosome_map,
     find_motifs,
     gc_content,
     nucleotide_frequencies,
@@ -52,6 +53,11 @@ def build_parser() -> argparse.ArgumentParser:
     viz_parser.add_argument("--output", default="genome_visualization.png", help="Path to save the visualization image")
     viz_parser.add_argument("--window-size", type=int, default=10, help="Window size for GC content calculation")
 
+    map_parser = subparsers.add_parser("chromosome-map", help="Show a compact chromosome-like GC heatmap of the sequence.")
+    map_parser.add_argument("sequence", help="DNA or RNA sequence")
+    map_parser.add_argument("--window-size", type=int, default=10, help="Window size for dividing the sequence")
+    map_parser.add_argument("--width", type=int, default=60, help="Width of each mapped segment")
+
     return parser
 
 
@@ -86,6 +92,8 @@ def main() -> None:
     elif args.command == "genome-visualize":
         output_path = visualize_genome(args.sequence, output_path=args.output, window_size=args.window_size)
         print(output_path)
+    elif args.command == "chromosome-map":
+        print(chromosome_map(args.sequence, window_size=args.window_size, width=args.width))
     else:
         parser.error(f"Unsupported command: {args.command}")
 

@@ -158,6 +158,30 @@ def visualize_genome(sequence: str, output_path: str = "genome_visualization.png
     return str(output)
 
 
+def chromosome_map(sequence: str, window_size: int = 10, width: int = 60) -> str:
+    seq = _normalize_sequence(sequence, allow_rna=True)
+    if window_size <= 0:
+        raise ValueError("window_size must be greater than zero.")
+    if width <= 0:
+        raise ValueError("width must be greater than zero.")
+
+    blocks: list[str] = []
+    for i in range(0, len(seq), window_size):
+        segment = seq[i:i + window_size]
+        if not segment:
+            continue
+        gc_percent = (sum(1 for base in segment if base in {"G", "C"}) / len(segment)) * 100
+        fullness = max(0, min(1, gc_percent / 100))
+        filled = int(fullness * width)
+        blocks.append("#" * filled + "." * (width - filled))
+
+    if not blocks:
+        raise ValueError("Sequence has no data to map.")
+
+    header = "Chromosome map: " + "=" * 10 + "\n"
+    return header + "\n".join(blocks)
+
+
 def read_fasta(path: str) -> dict[str, str]:
     records: dict[str, str] = {}
     current_name: str | None = None
