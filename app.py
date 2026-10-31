@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pandas as pd
 import streamlit as st
 
 from bioinformatics_tools.core import (
@@ -10,7 +11,6 @@ from bioinformatics_tools.core import (
     find_motifs,
     gc_content,
     nucleotide_frequencies,
-    read_fasta,
     reverse_complement,
     sequence_length,
     translate_dna,
@@ -18,12 +18,12 @@ from bioinformatics_tools.core import (
 )
 
 
-st.set_page_config(page_title="Genome Bioinformatics Analysis", layout="wide")
+st.set_page_config(page_title="Genome Browser", layout="wide")
 
-st.title("Genome Bioinformatics Analysis Tools")
-st.caption("Simple DNA/RNA analysis, genome visualization, and motif search")
+st.title("Genome Browser & Analysis Dashboard")
+st.caption("Upload a FASTA or paste a sequence to inspect GC content, motifs, and genome structure")
 
-uploaded = st.sidebar.file_uploader("Upload a FASTA file", type=["fa", "fasta", "txt"])
+uploaded = st.sidebar.file_uploader("Upload FASTA file", type=["fa", "fasta", "txt"])
 uploaded_sequence = ""
 if uploaded is not None:
     content = uploaded.read().decode("utf-8", errors="ignore")
@@ -44,42 +44,79 @@ if not sequence:
     st.warning("Please provide a nucleotide sequence.")
     st.stop()
 
-window_size = st.slider("Visualization window size", min_value=2, max_value=50, value=4)
+window_size = st.slider("Genome window size", min_value=2, max_value=50, value=4)
 
 col1, col2, col3, col4 = st.columns(4)
+counts = base_counts(sequence)
 with col1:
     st.metric("Length", sequence_length(sequence))
 with col2:
     st.metric("GC %", f"{gc_content(sequence):.2f}%")
 with col3:
-    st.metric("A/T bases", base_counts(sequence)["A"] + base_counts(sequence)["T"])
+    st.metric("AT bases", counts["A"] + counts["T"])
 with col4:
-    st.metric("G/C bases", base_counts(sequence)["G"] + base_counts(sequence)["C"])
+    st.metric("GC bases", counts["G"] + counts["C"])
 
 motif = st.text_input("Motif search", value="ATG")
 positions = find_motifs(sequence, motif)
-st.write(f"Motif positions for {motif!r}: {positions}")
 
-st.subheader("Sequence summaries")
-summary_cols = st.columns(2)
-with summary_cols[0]:
-    st.json({"base_counts": base_counts(sequence), "nucleotide_frequencies": nucleotide_frequencies(sequence)})
-with summary_cols[1]:
-    st.code(reverse_complement(sequence))
+overview, track, map_view, motifs = st.tabs(["Overview", "GC Track", "Chromosome Map", "Motif Hits"])
 
-st.subheader("Protein translation")
-prot = translate_dna(sequence)
-st.code(prot if prot else "No valid protein sequence found")
+with overview:
+    st.subheader("Sequence summary")
+    st.json({
+        "length": sequence_length(sequence),
+        "gc_content": round(gc_content(sequence), 2),
+        "base_counts": counts,
+        "nucleotide_frequencies": nucleotide_frequencies(sequence),
+        "reverse_complement": reverse_complement(sequence),
+    })
 
-st.subheader("Genome visualization")
-plot_path = Path("output") / "streamlit_genome_plot.png"
-plot_path.parent.mkdir(exist_ok=True)
-visualize_genome(sequence, output_path=str(plot_path), window_size=window_size)
-st.image(str(plot_path), caption="GC content across genome windows")
+    st.subheader("Protein translation")
+    protein = translate_dna(sequence)
+    st.code(protein if protein else "No valid protein translation found")
 
-st.subheader("Chromosome map")
-map_text = chromosome_map(sequence, window_size=window_size, width=50)
-st.code(map_text)
+with track:
+    st.subheader("GC content track")
+    gc_values = []
+    labels = []
+    for i in range(0, len(sequence), window_size):
+        segment = sequence[i:i + window_size]
+        if not segment:
+            continue
+        gc_values.append((sum(1 for b in segment if b in {"G", "C"}) / len(segment)) * 100)
+        labels.append(f"{i + 1}-{i + len(segment)}")
+
+    if gc_values:
+        chart_df = pd.DataFrame({"window": labels, "gc_percent": gc_values})
+        st.line_chart(chart_df.set_index("window"))
+    else:
+        st.info("No GC track data available.")
+
+    plot_path = Path("output") / "streamlit_genome_plot.png"
+    plot_path.parent.mkdir(exist_ok=True)
+    visualize_genome(sequence, output_path=str(plot_path), window_size=window_size)
+    st.image(str(plot_path), caption="Genome GC content visualization")
+
+with map_view:
+    st.subheader("Chromosome-style map")
+    st.code(chromosome_map(sequence, window_size=window_size, width=50))
+
+with motifs:
+    st.subheader("Motif positions")
+    st.write(f"Motif {motif!r} found at positions: {positions}")
+    if positions:
+        highlight_text = []
+        last = 0
+        for pos in positions:
+            highlight_text.append(sequence[last:pos])
+            highlight_text.append(f"[{sequence[pos:pos + len(motif)]}]")
+            last = pos + len(motif)
+        highlight_text.append(sequence[last:])
+        st.code("".join(highlight_text))
+
+    motif_rows = [{"position": pos, "motif": sequence[pos:pos + len(motif)]} for pos in positions]
+    st.dataframe(pd.DataFrame(motif_rows), use_container_width=True)
 
 
 def read_fasta_from_text(raw_text: str) -> dict[str, str]:
